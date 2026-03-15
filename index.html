@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MoneyFlow — Controle Financeiro</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- CSS personalizado -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════════════════════
+       SIDEBAR
+  ═══════════════════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">₿</div>
+            <span class="brand-name">MoneyFlow</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-section="dashboard" onclick="navegarPara('dashboard', this)">
+                <span class="nav-icon">◈</span>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-section="transacoes" onclick="navegarPara('transacoes', this)">
+                <span class="nav-icon">⇄</span>
+                <span class="nav-label">Transações</span>
+            </a>
+            <a href="#" class="nav-item" data-section="categorias" onclick="navegarPara('categorias', this)">
+                <span class="nav-icon">◉</span>
+                <span class="nav-label">Categorias</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="status-indicator">
+                <span class="status-dot" id="statusDot"></span>
+                <span class="status-text" id="statusText">Conectando...</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ═══════════════════════════════════════════════
+       CONTEÚDO PRINCIPAL
+  ═══════════════════════════════════════════════ -->
+    <main class="main-content">
+
+        <!-- ── TOPBAR ── -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+                <div class="page-title" id="pageTitle">Dashboard</div>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-date" id="topbarDate"></div>
+            </div>
+        </header>
+
+        <!-- ══════════════════════════════════════════
+         SEÇÃO: DASHBOARD
+    ══════════════════════════════════════════ -->
+        <section id="section-dashboard" class="page-section active">
+
+            <!-- Cards de resumo -->
+            <div class="summary-grid">
+                <div class="summary-card saldo-card">
+                    <div class="card-label">Saldo Total</div>
+                    <div class="card-value" id="cardSaldo">R$ —</div>
+                    <div class="card-badge" id="badgeSaldo">—</div>
+                    <div class="card-decoration">◈</div>
+                </div>
+                <div class="summary-card receita-card">
+                    <div class="card-label">Receitas</div>
+                    <div class="card-value" id="cardReceitas">R$ —</div>
+                    <div class="card-sub">este período</div>
+                    <div class="card-decoration">↑</div>
+                </div>
+                <div class="summary-card despesa-card">
+                    <div class="card-label">Despesas</div>
+                    <div class="card-value" id="cardDespesas">R$ —</div>
+                    <div class="card-sub">este período</div>
+                    <div class="card-decoration">↓</div>
+                </div>
+            </div>
+
+            <!-- Gráfico + últimas transações -->
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Despesas por Categoria</span>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="graficoCategorias"></canvas>
+                        <div class="chart-empty" id="chartEmpty">Nenhuma despesa registrada ainda.</div>
+                    </div>
+                    <div class="chart-legend" id="chartLegend"></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Últimas Transações</span>
+                        <a href="#" class="panel-link" onclick="navegarPara('transacoes', null)">Ver todas →</a>
+                    </div>
+                    <div class="transactions-list" id="recentTransactions">
+                        <div class="empty-state">Carregando...</div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ══════════════════════════════════════════
+         SEÇÃO: TRANSAÇÕES
+    ══════════════════════════════════════════ -->
+        <section id="section-transacoes" class="page-section">
+
+            <div class="section-layout">
+
+                <!-- Formulário -->
+                <div class="panel form-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Nova Transação</span>
+                    </div>
+                    <form id="formTransacao" onsubmit="submitTransacao(event)">
+                        <div class="form-group">
+                            <label class="form-label">Descrição</label>
+                            <input type="text" id="txDescricao" class="form-input"
+                                placeholder="Ex: Almoço no restaurante" required />
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Valor (R$)</label>
+                                <input type="number" id="txValor" class="form-input" placeholder="0,00" step="0.01"
+                                    min="0.01" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Tipo</label>
+                                <select id="txTipo" class="form-input" required>
+                                    <option value="">Selecione</option>
+                                    <option value="receita">↑ Receita</option>
+                                    <option value="despesa">↓ Despesa</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Categoria</label>
+                                <select id="txCategoria" class="form-input">
+                                    <option value="">Sem categoria</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Data</label>
+                                <input type="date" id="txData" class="form-input" required />
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Registrar Transação</button>
+                    </form>
+                </div>
+
+                <!-- Lista de transações -->
+                <div class="panel list-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Histórico</span>
+                        <div class="month-nav">
+                            <button class="month-btn" onclick="mudarMes(-1)">‹</button>
+                            <span class="month-label" id="mesLabel">—</span>
+                            <button class="month-btn" onclick="mudarMes(1)">›</button>
+                        </div>
+                    </div>
+                    <div class="transactions-list" id="listaTransacoes">
+                        <div class="empty-state">Carregando...</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════
+         SEÇÃO: CATEGORIAS
+    ══════════════════════════════════════════ -->
+        <section id="section-categorias" class="page-section">
+
+            <div class="section-layout">
+
+                <!-- Formulário -->
+                <div class="panel form-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Nova Categoria</span>
+                    </div>
+                    <form id="formCategoria" onsubmit="submitCategoria(event)">
+                        <div class="form-group">
+                            <label class="form-label">Nome</label>
+                            <input type="text" id="catNome" class="form-input" placeholder="Ex: Alimentação" required />
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Ícone (emoji)</label>
+                                <input type="text" id="catIcone" class="form-input emoji-input" placeholder="🍔"
+                                    maxlength="2" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Cor</label>
+                                <input type="color" id="catCor" class="form-input color-input" value="#2ECC71" />
+                            </div>
+                        </div>
+
+                        <!-- Preview -->
+                        <div class="category-preview" id="categoryPreview">
+                            <div class="preview-card" id="previewCard">
+                                <span class="preview-icon" id="previewIcon">📦</span>
+                                <span class="preview-name" id="previewName">Nova Categoria</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Criar Categoria</button>
+                    </form>
+                </div>
+
+                <!-- Lista de categorias -->
+                <div class="panel list-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Categorias</span>
+                        <span class="panel-count" id="catCount">0 categorias</span>
+                    </div>
+                    <div class="categories-grid" id="listaCategorias">
+                        <div class="empty-state">Carregando...</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast de notificação -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
