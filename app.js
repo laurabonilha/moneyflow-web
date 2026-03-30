@@ -411,9 +411,20 @@ async function submitCategoria(event) {
             document.getElementById('catCor').value = '#2ECC71';
             resetarPreview();
             carregarCategorias();
+        } else if (res.status === 409) {
+            let msgErro = 'Já existe uma categoria com este nome.';
+            try {
+                const err = await res.json();
+                if (err.erro) msgErro = err.erro;
+            } catch (e) {}
+            mostrarToast(msgErro, 'erro');
         } else {
-            const err = await res.json();
-            mostrarToast(err.erro || 'Erro ao criar categoria.', 'erro');
+            let msgErro = 'Erro ao criar categoria.';
+            try {
+                const err = await res.json();
+                msgErro = err.erro || msgErro;
+            } catch (e) {}
+            mostrarToast(msgErro, 'erro');
         }
     } catch {
         mostrarToast('Não foi possível conectar à API.', 'erro');
