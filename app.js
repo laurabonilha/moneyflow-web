@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   FINTRACK — app.js
+   MONEYFLOW — app.js
    SPA em JavaScript Vanilla
    Todas as chamadas à API estão mapeadas aqui
 ═══════════════════════════════════════════════════ */
@@ -150,7 +150,8 @@ async function carregarResumo() {
 async function carregarGraficoCategorias() {
     try {
         const res = await fetch(`${API_URL}/resumo/categorias`);
-        const data = await res.json();
+        const json = await res.json();
+        const data = json.resumo_categorias || json;
 
         const comDados = data.filter(c => c.total > 0);
         const emptyEl = document.getElementById('chartEmpty');
@@ -217,7 +218,8 @@ async function carregarGraficoCategorias() {
 async function carregarTransacoesRecentes() {
     try {
         const res = await fetch(`${API_URL}/transacoes`);
-        const data = await res.json();
+        const json = await res.json();
+        const data = json.transacoes || json;
 
         const container = document.getElementById('recentTransactions');
         const ultimas = data.slice(0, 5);
@@ -263,7 +265,8 @@ async function carregarTransacoesPorMes() {
 
     try {
         const res = await fetch(`${API_URL}/transacoes/mes/${estado.anoAtual}/${estado.mesAtual}`);
-        const data = await res.json();
+        const json = await res.json();
+        const data = json.transacoes || json;
 
         if (data.length === 0) {
             container.innerHTML = '<div class="empty-state">Nenhuma transação neste mês.</div>';
@@ -356,7 +359,8 @@ async function carregarCategorias() {
     // GET /categorias
     try {
         const res = await fetch(`${API_URL}/categorias`);
-        const data = await res.json();
+        const json = await res.json();
+        const data = json.categorias || json;
 
         countEl.textContent = `${data.length} categoria${data.length !== 1 ? 's' : ''}`;
 
@@ -416,14 +420,14 @@ async function submitCategoria(event) {
             try {
                 const err = await res.json();
                 if (err.erro) msgErro = err.erro;
-            } catch (e) {}
+            } catch (e) { }
             mostrarToast(msgErro, 'erro');
         } else {
             let msgErro = 'Erro ao criar categoria.';
             try {
                 const err = await res.json();
                 msgErro = err.erro || msgErro;
-            } catch (e) {}
+            } catch (e) { }
             mostrarToast(msgErro, 'erro');
         }
     } catch {
@@ -487,7 +491,8 @@ function renderCategoryCard(c) {
 async function popularSelectCategorias() {
     try {
         const res = await fetch(`${API_URL}/categorias`);
-        const data = await res.json();
+        const json = await res.json();
+        const data = json.categorias || json;
         const sel = document.getElementById('txCategoria');
         sel.innerHTML = '<option value="">Sem categoria</option>' +
             data.map(c => `<option value="${c.id}">${c.icone || ''} ${c.nome}</option>`).join('');
